@@ -1,0 +1,202 @@
+- route:
+    id: main
+    from:
+      uri: platform-http
+      parameters:
+        path: /camel/article/{topic}
+      steps:
+        - setBody:
+            id: setBody-2144
+            expression:
+              simple:
+                expression: ${header.topic}
+        - to:
+            id: to-2115
+            uri: direct
+            parameters:
+              name: workflow
+            disabled: false
+        - log:
+            disabled: false
+            message: ${body}
+- route:
+    id: workflow
+    from:
+      id: from-2937
+      uri: direct
+      parameters:
+        name: workflow
+      steps:
+        - setVariable:
+            id: setVariable-8396
+            expression:
+              simple:
+                expression: ${body}
+            name: topic
+        - loop:
+            steps:
+              - to:
+                  uri: direct
+                  parameters:
+                    name: researcher
+              - to:
+                  id: to-1465
+                  uri: direct
+                  parameters:
+                    name: author
+              - choice:
+                  id: choice-1224
+                  when:
+                    - id: when-1202
+                      steps:
+                        - to:
+                            id: to-1316
+                            uri: direct
+                            parameters:
+                              name: reviewer
+                      expression:
+                        simple:
+                          expression: ${exchangeProperty.CamelLoopIndex} < 2
+            expression:
+              constant:
+                expression: "3"
+        - to:
+            id: to-1604
+            uri: direct
+            parameters:
+              name: formatter
+        - log:
+            id: log-2967
+            message: ${body}
+- route:
+    id: researcher
+    description: researcher
+    from:
+      uri: direct
+      parameters:
+        name: researcher
+      steps:
+        - process:
+            description: AI message
+            disabled: false
+            ref: createResearchMessage
+        - log:
+            message: ${body}
+        - to:
+            id: to-2801
+            uri: langchain4j-tools
+            parameters:
+              tags: facts
+              toolId: facts
+        - setVariable:
+            description: set var Research
+            expression:
+              simple:
+                expression: ${body}
+            name: research
+        - log:
+            message: research:\n${body}
+- route:
+    id: tool-facts
+    description: Tool to get Facts
+    from:
+      id: from-2135
+      uri: langchain4j-tools
+      parameters:
+        description: get facts for a given topic
+        parameter.topic: string
+        tags: facts
+        toolId: facts
+      steps:
+        - process:
+            description: AI message
+            disabled: false
+            ref: createFactsMessage
+        - log:
+            message: ${body}
+        - to:
+            uri: langchain4j-chat
+            parameters:
+              chatId: myllm
+              chatOperation: CHAT_MULTIPLE_MESSAGES
+            disabled: false
+        - log:
+            message: facts:\n${body}
+- route:
+    id: author
+    description: author
+    from:
+      uri: direct
+      parameters:
+        name: author
+      steps:
+        - process:
+            description: AI message
+            disabled: false
+            ref: createAuthorMessage
+        - log:
+            message: ${body}
+        - to:
+            uri: langchain4j-chat
+            parameters:
+              chatId: myllm
+              chatOperation: CHAT_MULTIPLE_MESSAGES
+            disabled: false
+        - setVariable:
+            description: set var Draft
+            expression:
+              simple:
+                expression: ${body}
+            name: draft
+        - log:
+            message: revision:\n${body}
+- route:
+    id: reviewer
+    description: reviewer
+    from:
+      uri: direct
+      parameters:
+        name: reviewer
+      steps:
+        - process:
+            description: AI message
+            disabled: false
+            ref: createReviewerMessage
+        - log:
+            message: ${body}
+        - to:
+            uri: langchain4j-chat
+            parameters:
+              chatId: myllm
+              chatOperation: CHAT_MULTIPLE_MESSAGES
+            disabled: false
+        - setVariable:
+            description: set var Revision
+            expression:
+              simple:
+                expression: ${body}
+            name: revision
+        - log:
+            message: revision:\n${body}
+- route:
+    id: formatter
+    description: formatter
+    from:
+      uri: direct
+      parameters:
+        name: formatter
+      steps:
+        - process:
+            description: AI message
+            disabled: false
+            ref: createFormatterMessage
+        - log:
+            message: ${body}
+        - to:
+            uri: langchain4j-chat
+            parameters:
+              chatId: myllm
+              chatOperation: CHAT_MULTIPLE_MESSAGES
+            disabled: false
+        - log:
+            message: revision:\n${body}
