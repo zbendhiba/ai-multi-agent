@@ -48,4 +48,6 @@ perf-regression-report@*.txt
 # Camel Jband
 .camel-jbang/*
 .camel-jbang
+workflow-external-agents/.camel-jbang/*
+workflow-external-agents/.camel-jbang
 
