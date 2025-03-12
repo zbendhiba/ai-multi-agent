@@ -1,0 +1,432 @@
+- route:
+    id: main
+    from:
+      uri: platform-http
+      parameters:
+        path: /camel/article/{topic}
+      steps:
+        - setBody:
+            id: setBody-2144
+            expression:
+              simple:
+                expression: ${header.topic}
+        - to:
+            id: to-2115
+            uri: direct
+            parameters:
+              name: workflow
+            disabled: false
+        - log:
+            disabled: false
+            message: ${body}
+- route:
+    id: workflow
+    from:
+      uri: direct
+      parameters:
+        name: workflow
+      steps:
+        - setVariables:
+            variables:
+              - expression:
+                  simple:
+                    expression: ${body}
+                name: topic
+              - expression:
+                  simple:
+                    expression: ignore
+                name: research
+              - expression:
+                  simple:
+                    expression: ignore
+                name: draft
+              - expression:
+                  simple:
+                    expression: ignore
+                name: revision
+        - loop:
+            steps:
+              - pipeline:
+                  description: research
+                  steps:
+                    - setVariable:
+                        description: set agent
+                        expression:
+                          simple:
+                            expression: researcher
+                        name: agent
+                    - to:
+                        uri: direct
+                        parameters:
+                          name: call-agent
+              - pipeline:
+                  description: author
+                  steps:
+                    - setVariable:
+                        description: set agent
+                        expression:
+                          simple:
+                            expression: author
+                        name: agent
+                    - to:
+                        uri: direct
+                        parameters:
+                          name: call-agent
+                  disabled: false
+              - choice:
+                  id: choice-1224
+                  when:
+                    - id: when-1202
+                      steps:
+                        - pipeline:
+                            description: reviewer
+                            steps:
+                              - setVariable:
+                                  description: set agent
+                                  expression:
+                                    simple:
+                                      expression: reviewer
+                                  name: agent
+                              - to:
+                                  uri: direct
+                                  parameters:
+                                    name: call-agent
+                      expression:
+                        simple:
+                          expression: ${exchangeProperty.CamelLoopIndex} < 2
+            expression:
+              constant:
+                expression: "3"
+        - pipeline:
+            description: formatter
+            steps:
+              - setVariable:
+                  description: set agent
+                  expression:
+                    simple:
+                      expression: formatter
+                  name: agent
+              - to:
+                  uri: direct
+                  parameters:
+                    name: call-agent
+              - setBody:
+                  id: setBody-2324
+                  expression:
+                    simple:
+                      expression: ${variable.draft}
+        - log:
+            id: log-2967
+            message: ${body}
+- route:
+    id: researcher
+    description: researcher
+    from:
+      id: from-2688
+      uri: platform-http
+      parameters:
+        path: /camel/agent/researcher
+      steps:
+        - to:
+            id: to-7181
+            uri: direct
+            parameters:
+              name: set-variables
+        - process:
+            description: AI message
+            disabled: false
+            ref: createResearchMessage
+        - log:
+            message: ${body}
+        - to:
+            id: to-2801
+            uri: langchain4j-tools
+            parameters:
+              tags: facts
+              toolId: facts
+        - setVariable:
+            description: set var Research
+            expression:
+              simple:
+                expression: ${body}
+            name: research
+        - to:
+            id: to-3971
+            uri: direct
+            parameters:
+              name: map-variables
+            disabled: false
+- route:
+    id: tool-facts
+    description: Tool to get Facts
+    from:
+      id: from-2135
+      uri: langchain4j-tools
+      parameters:
+        description: get facts about topic
+        parameter.topic: string
+        tags: facts
+        toolId: facts
+      steps:
+        - process:
+            description: AI message
+            disabled: false
+            ref: createFactsMessage
+        - log:
+            message: ${body}
+        - to:
+            uri: langchain4j-chat
+            parameters:
+              chatId: myllm
+              chatOperation: CHAT_MULTIPLE_MESSAGES
+            disabled: false
+        - log:
+            message: facts:\n${body}
+- route:
+    id: author
+    description: author
+    from:
+      id: from-1215
+      uri: platform-http
+      parameters:
+        path: /camel/agent/author
+      steps:
+        - to:
+            id: to-2197
+            uri: direct
+            parameters:
+              name: set-variables
+        - process:
+            description: AI message
+            disabled: false
+            ref: createAuthorMessage
+        - to:
+            uri: langchain4j-chat
+            parameters:
+              chatId: myllm
+              chatOperation: CHAT_MULTIPLE_MESSAGES
+            disabled: false
+        - setVariable:
+            description: set var Draft
+            expression:
+              simple:
+                expression: ${body}
+            name: draft
+        - to:
+            id: to-9287
+            uri: direct
+            parameters:
+              name: map-variables
+- route:
+    id: reviewer
+    description: reviewer
+    from:
+      id: from-2440
+      uri: platform-http
+      parameters:
+        path: /camel/agent/reviewer
+      steps:
+        - to:
+            id: to-3442
+            uri: direct
+            parameters:
+              name: set-variables
+        - process:
+            description: AI message
+            disabled: false
+            ref: createReviewerMessage
+        - to:
+            uri: langchain4j-chat
+            parameters:
+              chatId: myllm
+              chatOperation: CHAT_MULTIPLE_MESSAGES
+            disabled: false
+        - setVariable:
+            description: set var Revision
+            expression:
+              simple:
+                expression: ${body}
+            name: revision
+        - to:
+            id: to-1908
+            uri: direct
+            parameters:
+              name: map-variables
+- route:
+    id: formatter
+    description: formatter
+    from:
+      id: from-1792
+      uri: platform-http
+      parameters:
+        path: /camel/agent/formatter
+      steps:
+        - to:
+            id: to-5256
+            uri: direct
+            parameters:
+              name: set-variables
+        - process:
+            description: AI message
+            disabled: false
+            ref: createFormatterMessage
+        - to:
+            uri: langchain4j-chat
+            parameters:
+              chatId: myllm
+              chatOperation: CHAT_MULTIPLE_MESSAGES
+            disabled: false
+        - setVariable:
+            id: setVariable-3759
+            expression:
+              simple:
+                expression: ${body}
+            name: draft
+        - to:
+            id: to-1587
+            uri: direct
+            parameters:
+              name: map-variables
+- route:
+    id: call-agent
+    from:
+      id: from-3261
+      uri: direct
+      parameters:
+        name: call-agent
+      steps:
+        - to:
+            id: to-6779
+            uri: direct
+            parameters:
+              name: map-variables
+        - removeHeaders:
+            id: removeHeaders-2361
+            pattern: "*"
+        - toD:
+            id: to-1515
+            uri: http
+            parameters:
+              httpUri: localhost:8080/camel/agent/${variable.agent}
+        - to:
+            id: to-1071
+            uri: direct
+            parameters:
+              name: set-variables
+- route:
+    id: set variables
+    description: set variables
+    from:
+      id: from-4362
+      uri: direct
+      parameters:
+        name: set-variables
+      steps:
+        - setVariables:
+            variables:
+              - expression:
+                  jq:
+                    expression: .topic
+                name: topic
+              - expression:
+                  jq:
+                    expression: .research
+                name: research
+              - expression:
+                  jq:
+                    expression: .draft
+                name: draft
+              - expression:
+                  jq:
+                    expression: .revision
+                name: revision
+        - to:
+            id: to-3399
+            uri: log
+            parameters:
+              loggerName: InfoLogger
+              showAll: true
+        - unmarshal:
+            id: unmarshal-1762
+            base64:
+              lineSeparator: ""
+            disabled: false
+            variableSend: research
+        - setVariable:
+            id: setVariable-4279
+            expression:
+              simple:
+                expression: ${body}
+            name: research
+        - unmarshal:
+            id: unmarshal-1869
+            base64:
+              lineSeparator: ""
+            variableSend: draft
+        - setVariable:
+            id: setVariable-2193
+            expression:
+              simple:
+                expression: ${body}
+            name: draft
+        - unmarshal:
+            id: unmarshal-3981
+            base64: {}
+            disabled: false
+            variableSend: revision
+        - setVariable:
+            id: setVariable-8969
+            expression:
+              simple:
+                expression: ${body}
+            name: revision
+        - log:
+            id: log-1043
+            message: topic ${variable.topic}
+- route:
+    id: map-variables
+    from:
+      id: from-3974
+      uri: direct
+      parameters:
+        name: map-variables
+      steps:
+        - to:
+            id: to-4179
+            uri: log
+            parameters:
+              loggerName: InfoLogger
+              showAll: true
+        - marshal:
+            id: marshal-2066
+            base64:
+              lineSeparator: ""
+            variableReceive: research
+            variableSend: research
+        - marshal:
+            id: marshal-3188
+            base64:
+              lineSeparator: ""
+            variableReceive: draft
+            variableSend: draft
+        - marshal:
+            id: marshal-3188
+            base64:
+              lineSeparator: ""
+            variableReceive: revision
+            variableSend: revision
+        - setBody:
+            id: setBody-3671
+            expression:
+              simple:
+                expression: |-
+                  {
+                  "topic":"${variable.topic}",
+                  "research":"${variable.research}",
+                  "draft":"${variable.draft}",
+                  "revision":"${variable.revision}"
+                  }
+        - marshal:
+            id: marshal-1589
+            base64: {}
+            disabled: true
