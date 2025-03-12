@@ -42,7 +42,7 @@ public class bindings extends RouteBuilder {
     public static ChatLanguageModel chatModel(){
 
         ChatLanguageModel model = OpenAiChatModel.builder()
-            .apiKey("EMPTY")
+            .apiKey(System.getenv("OPEN_API_KEY"))
             // .modelName("qwen2.5:0.5b-instruct")
             // .modelName("qwen2.5:7b-instruct")
             .modelName("qwen2.5:3b-instruct")
