@@ -1,10 +1,10 @@
 package dev.zbendhib.workflow;
 
 
-import org.apache.camel.BindToRegistry;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Named;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
-import org.apache.camel.builder.RouteBuilder;
 
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -14,14 +14,10 @@ import dev.langchain4j.data.message.UserMessage;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Reviewer extends RouteBuilder {
+@ApplicationScoped
+public class Reviewer  {
 
-    @Override
-    public void configure() throws Exception {
-        // Routes are loaded from YAML files
-    }
-
-    @BindToRegistry(lazy=true)
+    @Named
     public static Processor createReviewerMessage(){
 
         return new Processor() {

@@ -1,27 +1,24 @@
 package dev.zbendhib.workflow;
 
 
-import org.apache.camel.BindToRegistry;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Named;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
-import org.apache.camel.builder.RouteBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Author extends RouteBuilder {
 
-    @Override
-    public void configure() throws Exception {
-        // Routes are loaded from YAML files
-    }
+@ApplicationScoped
+public class Author {
 
-    @BindToRegistry(lazy=true)
-    public static Processor createAuthorMessage(){
+    @Named
+    Processor createAuthorMessage(){
 
         return new Processor() {
             public void process(Exchange exchange) throws Exception {
