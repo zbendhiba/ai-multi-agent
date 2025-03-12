@@ -1,6 +1,5 @@
 package dev.zbendhib.workflow;
 
-//DEPS dev.langchain4j:langchain4j-open-ai:0.33.0
 
 import org.apache.camel.BindToRegistry;
 import org.apache.camel.Exchange;
