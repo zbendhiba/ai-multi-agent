@@ -20,7 +20,7 @@ import java.util.List;
 
 import org.apache.camel.builder.ExchangeBuilder;
 
-public class facts extends RouteBuilder {
+public class Facts extends RouteBuilder {
 
     @Override
     public void configure() throws Exception {

@@ -21,7 +21,7 @@ import java.util.List;
 
 import org.apache.camel.builder.ExchangeBuilder;
 
-public class bindings extends RouteBuilder {
+public class Bindings extends RouteBuilder {
 
     @Override
     public void configure() throws Exception {

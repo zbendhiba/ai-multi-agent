@@ -20,7 +20,7 @@ import java.util.List;
 
 import org.apache.camel.builder.ExchangeBuilder;
 
-public class formatter extends RouteBuilder {
+public class Formatter extends RouteBuilder {
 
     @Override
     public void configure() throws Exception {
