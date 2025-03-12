@@ -4,22 +4,15 @@ package dev.zbendhib.workflow;
 import org.apache.camel.BindToRegistry;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
-import org.apache.camel.PropertyInject;
 import org.apache.camel.builder.RouteBuilder;
 
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.openai.OpenAiChatModel;
-
-import static java.time.Duration.ofSeconds;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.camel.builder.ExchangeBuilder;
 
 public class Facts extends RouteBuilder {
 
